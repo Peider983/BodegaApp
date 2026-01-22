@@ -21,15 +21,10 @@ export default function NewSale() {
     [products]
   );
 
-  // buscador + selector para "agregar item"
   const [query, setQuery] = useState("");
   const [productId, setProductId] = useState(activeProducts[0]?.id ?? 1);
   const [qty, setQty] = useState(1);
-
-  // método para TODO el ticket
   const [paymentMethod, setPaymentMethod] = useState("efectivo");
-
-  // carrito: [{ productId, qty }]
   const [items, setItems] = useState([]);
 
   if (!activeProducts.length) return <p>No hay productos activos cargados.</p>;
@@ -46,21 +41,18 @@ export default function NewSale() {
     });
   }, [activeProducts, query]);
 
-  // asegurar productId válido si cambian productos activos
   useEffect(() => {
     if (!activeProducts.length) return;
     const exists = activeProducts.some((p) => p.id === Number(productId));
     if (!exists) setProductId(activeProducts[0].id);
   }, [activeProducts, productId]);
 
-  // mantener productId válido dentro del filtro
   useEffect(() => {
     if (!filteredProducts.length) return;
     const exists = filteredProducts.some((p) => p.id === Number(productId));
     if (!exists) setProductId(filteredProducts[0].id);
   }, [filteredProducts, productId]);
 
-  // helper: stock disponible considerando lo que ya está en el carrito
   const availableStockFor = (pid) => {
     const p = activeProducts.find((x) => x.id === Number(pid));
     const inCart = items
@@ -76,16 +68,12 @@ export default function NewSale() {
 
   const addItem = () => {
     if (!selected) return;
-
     const q = Number(qty);
-    if (!Number.isFinite(q) || q <= 0)
-      return alert("Cantidad debe ser mayor a 0");
+    if (!Number.isFinite(q) || q <= 0) return alert("Cantidad debe ser mayor a 0");
 
     const available = availableStockFor(selected.id);
     if (q > available) {
-      return alert(
-        `No hay stock suficiente. Disponible para agregar: ${Math.max(available, 0)}`
-      );
+      return alert(`No hay stock suficiente. Disponible: ${Math.max(available, 0)}`);
     }
 
     setItems((prev) => {
@@ -103,123 +91,94 @@ export default function NewSale() {
   };
 
   const removeItem = (pid) => {
-    setItems((prev) =>
-      prev.filter((it) => Number(it.productId) !== Number(pid))
-    );
+    setItems((prev) => prev.filter((it) => Number(it.productId) !== Number(pid)));
   };
 
   const updateItemQty = (pid, newQty) => {
     const q = Number(newQty);
     if (!Number.isFinite(q) || q <= 0) return;
-
     const p = activeProducts.find((x) => x.id === Number(pid));
-    if (!p) return alert("Producto inválido o inactivo.");
+    if (!p) return;
 
-    const maxAllowed = Number(p.stock ?? 0);
-    if (q > maxAllowed) {
-      return alert(`No hay stock suficiente. Máximo: ${Math.max(maxAllowed, 0)}`);
+    if (q > Number(p.stock ?? 0)) {
+      return alert(`No hay stock suficiente. Máximo: ${p.stock}`);
     }
 
     setItems((prev) =>
-      prev.map((it) =>
-        Number(it.productId) === Number(pid) ? { ...it, qty: q } : it
-      )
+      prev.map((it) => (Number(it.productId) === Number(pid) ? { ...it, qty: q } : it))
     );
   };
 
+  // ✅ TOTAL ACTUALIZADO: Detecta si usa precio normal u oferta
   const cartTotal = useMemo(() => {
     return items.reduce((acc, it) => {
       const p = activeProducts.find((x) => x.id === Number(it.productId));
-      const price = Number(p?.precio ?? 0) || 0;
+      const price = (p?.precioOferta > 0) ? p.precioOferta : (p?.precio ?? 0);
       return acc + price * Number(it.qty || 0);
     }, 0);
   }, [items, activeProducts]);
 
   const submitAll = (e) => {
     e.preventDefault();
-    if (!items.length) return alert("Agregá al menos un producto al carrito.");
+    if (!items.length) return alert("Agregá al menos un producto.");
 
-    // validar stock final por producto (por si cambió algo)
-    for (const it of items) {
-      const p = activeProducts.find((x) => x.id === Number(it.productId));
-      if (!p) return alert("Hay un producto inválido o inactivo en el carrito.");
-
-      const q = Number(it.qty);
-      if (!Number.isFinite(q) || q <= 0) return alert("Hay cantidades inválidas.");
-      if (q > Number(p.stock ?? 0)) {
-        return alert(`No hay stock suficiente para ${p.nombre}. Stock: ${p.stock}`);
-      }
-    }
-
-    // registrar cada item como una venta (con el mismo método)
     items.forEach((it) => {
       sell({
         productId: Number(it.productId),
         qty: Number(it.qty),
-        paymentMethod, // ahora puede ser: efectivo | transferencia | tarjeta
+        paymentMethod,
       });
     });
 
     setItems([]);
-    setQty(1);
-    setQuery("");
     alert("Venta registrada ✅");
   };
 
   return (
-    <div>
+    <div style={{ padding: '20px' }}>
       <h1>Nueva venta</h1>
 
-      {/* Agregar productos al carrito */}
-      <div className="form" style={{ display: "grid", gap: 10, maxWidth: 520 }}>
+      <div className="form" style={{ display: "grid", gap: 10, maxWidth: 520, background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
         <label>
-          Buscar producto (nombre / SKU / categoría)
+          Buscar producto
           <input
+            style={inputStyle}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ej: coca, COCA-500, bebidas…"
+            placeholder="Ej: coca, hielo..."
           />
         </label>
 
         <label>
           Producto
-          <select value={productId} onChange={(e) => setProductId(e.target.value)}>
+          <select style={inputStyle} value={productId} onChange={(e) => setProductId(e.target.value)}>
             {filteredProducts.map((p) => (
               <option key={p.id} value={p.id} disabled={Number(p.stock ?? 0) <= 0}>
-                {p.nombre} {p.sku ? `(${p.sku})` : ""} — stock: {p.stock}
+                {p.nombre} {p.precioOferta > 0 ? `[OFERTA: ${money(p.precioOferta)}]` : `(${money(p.precio)})`} — stock: {p.stock}
               </option>
             ))}
           </select>
-
-          <small style={{ opacity: 0.7 }}>
-            Disponible para agregar: {Math.max(availableStockFor(productId), 0)}
-          </small>
-
-          {filteredProducts.length === 0 ? (
-            <small style={{ opacity: 0.7 }}>No hay coincidencias.</small>
-          ) : null}
         </label>
 
-        <label>
-          Cantidad
-          <input
-            type="number"
-            min="1"
-            value={qty}
-            onChange={(e) => setQty(Number(e.target.value))}
-          />
-        </label>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <label style={{ flex: 1 }}>
+            Cantidad
+            <input
+              style={inputStyle}
+              type="number"
+              min="1"
+              value={qty}
+              onChange={(e) => setQty(Number(e.target.value))}
+            />
+          </label>
+          <button type="button" onClick={addItem} style={btnAddStyle} disabled={!selected}>
+            Agregar
+          </button>
+        </div>
 
-        <button type="button" onClick={addItem} disabled={!selected}>
-          Agregar al carrito
-        </button>
-
         <label>
-          Método de pago (para todo el ticket)
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-          >
+          Método de pago
+          <select style={inputStyle} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
             <option value="efectivo">Efectivo</option>
             <option value="transferencia">Transferencia</option>
             <option value="tarjeta">Tarjeta</option>
@@ -227,46 +186,54 @@ export default function NewSale() {
         </label>
       </div>
 
-      {/* Carrito */}
-      <h2 style={{ marginTop: 18 }}>Carrito</h2>
+      <h2 style={{ marginTop: 25 }}>Carrito</h2>
       {items.length === 0 ? (
-        <p>Sin productos agregados.</p>
+        <p style={{ color: '#666' }}>Sin productos en el carrito.</p>
       ) : (
-        <table className="table">
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
           <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Cant.</th>
-              <th>Precio</th>
-              <th>Sub-total</th>
-              <th></th>
+            <tr style={{ background: '#eee', textAlign: 'left' }}>
+              <th style={tdStyle}>Producto</th>
+              <th style={tdStyle}>Cant.</th>
+              <th style={tdStyle}>Precio unit.</th>
+              <th style={tdStyle}>Sub-total</th>
+              <th style={tdStyle}></th>
             </tr>
           </thead>
           <tbody>
             {items.map((it) => {
               const p = activeProducts.find((x) => x.id === Number(it.productId));
-              const price = Number(p?.precio ?? 0) || 0;
+              const hasOffer = p?.precioOferta > 0;
+              const price = hasOffer ? p.precioOferta : (p?.precio ?? 0);
               const sub = price * Number(it.qty || 0);
 
               return (
-                <tr key={it.productId}>
-                  <td>
-                    {p?.nombre ?? "—"} {p?.sku ? `(${p.sku})` : ""}
+                <tr key={it.productId} style={{ borderBottom: '1px solid #eee' }}>
+                  <td style={tdStyle}>
+                    {p?.nombre} {p?.sku && <small style={{ color: '#999' }}>({p.sku})</small>}
                   </td>
-                  <td style={{ width: 120 }}>
+                  <td style={tdStyle}>
                     <input
+                      style={{ width: '60px', padding: '5px' }}
                       type="number"
                       min="1"
                       value={it.qty}
                       onChange={(e) => updateItemQty(it.productId, e.target.value)}
                     />
                   </td>
-                  <td>{money(price)}</td>
-                  <td>{money(sub)}</td>
-                  <td>
-                    <button type="button" onClick={() => removeItem(it.productId)}>
-                      Quitar
-                    </button>
+                  <td style={tdStyle}>
+                    {hasOffer ? (
+                      <div>
+                        <span style={{ textDecoration: 'line-through', color: 'red', fontSize: '11px', marginRight: '5px' }}>{money(p.precio)}</span>
+                        <b style={{ color: '#28a745' }}>{money(price)}</b>
+                      </div>
+                    ) : (
+                      money(price)
+                    )}
+                  </td>
+                  <td style={tdStyle}>{money(sub)}</td>
+                  <td style={tdStyle}>
+                    <button onClick={() => removeItem(it.productId)} style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}>Quitar</button>
                   </td>
                 </tr>
               );
@@ -275,15 +242,22 @@ export default function NewSale() {
         </table>
       )}
 
-      <div className="total" style={{ marginTop: 10 }}>
-        Total: <b>{money(cartTotal)}</b>
+      <div style={{ marginTop: '20px', padding: '15px', background: '#333', color: '#fff', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: '1.2rem' }}>Total a cobrar:</span>
+        <b style={{ fontSize: '1.5rem' }}>{money(cartTotal)}</b>
       </div>
 
-      <form onSubmit={submitAll} style={{ marginTop: 10 }}>
-        <button type="submit" disabled={items.length === 0}>
-          Registrar venta
-        </button>
-      </form>
+      <button 
+        onClick={submitAll} 
+        disabled={items.length === 0}
+        style={{ width: '100%', marginTop: '15px', padding: '15px', background: '#28a745', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}
+      >
+        REGISTRAR VENTA FINAL
+      </button>
     </div>
   );
 }
+
+const inputStyle = { width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd', boxSizing: 'border-box' };
+const btnAddStyle = { padding: '0 20px', background: '#007bff', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' };
+const tdStyle = { padding: '12px 10px' };

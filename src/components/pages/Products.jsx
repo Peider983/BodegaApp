@@ -35,6 +35,7 @@ export default function Products() {
     categoria: "",
     descripcion: "",
     precio: "",
+    precioOferta: 0, // ✅ Agregado
     stock: "",
     minimo: "",
   });
@@ -46,23 +47,25 @@ export default function Products() {
     const categoria = String(form.categoria || "").trim();
     const descripcion = String(form.descripcion || "").trim();
     const precio = Number(form.precio);
+    const precioOferta = Number(form.precioOferta);
     const stock = Number(form.stock);
     const minimo = Number(form.minimo);
 
     if (!nombre) return alert("Nombre es requerido");
     if (!sku) return alert("SKU es requerido");
     if (!Number.isFinite(precio) || precio < 0) return alert("Precio inválido");
+    if (precioOferta < 0) return alert("Precio de oferta no puede ser negativo");
     if (!Number.isFinite(stock) || stock < 0) return alert("Stock inválido");
     if (!Number.isFinite(minimo) || minimo < 0) return alert("Mínimo inválido");
 
-    addProduct({ nombre, sku, categoria, descripcion, precio, stock, minimo });
-    setForm({ nombre: "", sku: "", categoria: "", descripcion: "", precio: "", stock: "", minimo: "" });
+    addProduct({ nombre, sku, categoria, descripcion, precio, precioOferta, stock, minimo });
+    setForm({ nombre: "", sku: "", categoria: "", descripcion: "", precio: "", precioOferta: 0, stock: "", minimo: "" });
     setShowAdd(false);
   };
 
   // --- Edición inline ---
   const [editingId, setEditingId] = useState(null);
-  const [edit, setEdit] = useState({ sku: "", categoria: "", descripcion: "", precio: "", minimo: "" });
+  const [edit, setEdit] = useState({ sku: "", categoria: "", descripcion: "", precio: "", precioOferta: 0, minimo: "" });
 
   const startEdit = (p) => {
     setEditingId(p.id);
@@ -71,6 +74,7 @@ export default function Products() {
       categoria: p.categoria ?? "",
       descripcion: p.descripcion ?? "",
       precio: p.precio ?? 0,
+      precioOferta: p.precioOferta ?? 0, // ✅ Agregado
       minimo: p.minimo ?? 0,
     });
   };
@@ -80,13 +84,15 @@ export default function Products() {
     const categoria = String(edit.categoria || "").trim();
     const descripcion = String(edit.descripcion || "").trim();
     const precio = Number(edit.precio);
+    const precioOferta = Number(edit.precioOferta);
     const minimo = Number(edit.minimo);
 
     if (!sku) return alert("SKU es requerido");
     if (!Number.isFinite(precio) || precio < 0) return alert("Precio inválido");
+    if (precioOferta < 0) return alert("Oferta inválida");
     if (!Number.isFinite(minimo) || minimo < 0) return alert("Mínimo inválido");
 
-    updateProduct(id, { sku, categoria, descripcion, precio, minimo });
+    updateProduct(id, { sku, categoria, descripcion, precio, precioOferta, minimo });
     setEditingId(null);
   };
 
@@ -102,7 +108,7 @@ export default function Products() {
   // --- Lista filtrada ---
   const visibleProducts = useMemo(() => {
     const query = q.trim().toLowerCase();
-    let list = (products ||封装).filter((p) => {
+    let list = (products || []).filter((p) => {
       const nombre = String(p.nombre || "").toLowerCase();
       const sku = String(p.sku || "").toLowerCase();
       const categoria = String(p.categoria || "").toLowerCase();
@@ -146,7 +152,7 @@ export default function Products() {
       </div>
 
       <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end" }}>
-        <button type="button" onClick={() => setShowAdd((s) => !s)}>
+        <button type="button" onClick={() => setShowAdd((s) => !s)} style={{ padding: '10px 15px', cursor: 'pointer' }}>
           {showAdd ? "Cerrar" : "➕ Agregar producto"}
         </button>
 
@@ -156,12 +162,13 @@ export default function Products() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Ej: coca, COCA-500..."
+            style={{ padding: '8px' }}
           />
         </label>
 
         <label style={{ display: "grid", gap: 6 }}>
           Filtro
-          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ padding: '8px' }}>
             <option value="all">Activos</option>
             <option value="low">Stock bajo ({"<="} mínimo)</option>
             <option value="zero">Sin stock (= 0)</option>
@@ -178,37 +185,37 @@ export default function Products() {
           Alertas primero
         </label>
 
-        <button type="button" onClick={() => { setQ(""); setFilter("all"); }}>
+        <button type="button" onClick={() => { setQ(""); setFilter("all"); }} style={{ padding: '8px' }}>
           Limpiar
         </button>
       </div>
 
       {showAdd && (
-        <form className="form" onSubmit={onAddSubmit} style={{ marginTop: 20, border: "1px solid #ddd", padding: 15, borderRadius: 8 }}>
+        <form className="form" onSubmit={onAddSubmit} style={{ marginTop: 20, border: "2px solid #007bff", padding: 15, borderRadius: 8, background: '#f8f9fa' }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
             <label>Nombre <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} /></label>
             <label>SKU <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} /></label>
             <label>Categoría <input value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} /></label>
-            <label>Precio (Gs.) <input type="number" value={form.precio} onChange={(e) => setForm({ ...form, precio: e.target.value })} /></label>
+            <label>Precio Normal (Gs.) <input type="number" value={form.precio} onChange={(e) => setForm({ ...form, precio: e.target.value })} /></label>
+            <label>Precio Oferta (Opcional) <input type="number" value={form.precioOferta} onChange={(e) => setForm({ ...form, precioOferta: e.target.value })} style={{ border: form.precioOferta > 0 ? '2px solid #28a745' : '1px solid #ccc' }} /></label>
             <label>Stock inicial <input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} /></label>
             <label>Stock mínimo <input type="number" value={form.minimo} onChange={(e) => setForm({ ...form, minimo: e.target.value })} /></label>
           </div>
-          <button type="submit" style={{ marginTop: 10 }}>Guardar producto</button>
+          <button type="submit" style={{ marginTop: 15, padding: '10px 20px', background: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Guardar nuevo producto</button>
         </form>
       )}
 
       <table className="table" style={{ marginTop: 20, width: "100%", borderCollapse: "collapse" }}>
         <thead>
-          <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
-            <th>Producto</th>
+          <tr style={{ textAlign: "left", borderBottom: "2px solid #eee", background: '#f2f2f2' }}>
+            <th style={{ padding: '10px' }}>Producto</th>
             <th>SKU</th>
-            <th>Categoría</th>
-            <th>Precio</th>
+            <th>Precio Unit.</th>
+            <th>Oferta</th>
             <th>Stock</th>
             <th>Mínimo</th>
-            <th>Alerta</th>
-            <th>Entrada stock</th>
             <th>Estado</th>
+            <th>Entrada</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -222,19 +229,25 @@ export default function Products() {
 
             return (
               <tr key={p.id} style={{ opacity: active ? 1 : 0.6, borderBottom: "1px solid #eee" }}>
-                <td>{p.nombre}</td>
-                <td>{isEditing ? <input value={edit.sku} onChange={(e) => setEdit({ ...edit, sku: e.target.value })} /> : p.sku}</td>
-                <td>{isEditing ? <input value={edit.categoria} onChange={(e) => setEdit({ ...edit, categoria: e.target.value })} /> : p.categoria}</td>
-                <td>{isEditing ? <input type="number" value={edit.precio} onChange={(e) => setEdit({ ...edit, precio: e.target.value })} /> : money(p.precio)}</td>
-                <td>{stock}</td>
-                <td>{isEditing ? <input type="number" value={edit.minimo} onChange={(e) => setEdit({ ...edit, minimo: e.target.value })} /> : minimo}</td>
-                <td style={{ color: alerta ? "red" : "inherit" }}>{alerta ? "⚠️ Bajo" : active ? "OK" : "-"}</td>
+                <td style={{ padding: '10px' }}><b>{p.nombre}</b><br/><small>{p.categoria}</small></td>
+                <td>{isEditing ? <input style={{width: '80px'}} value={edit.sku} onChange={(e) => setEdit({ ...edit, sku: e.target.value })} /> : p.sku}</td>
+                <td>{isEditing ? <input type="number" style={{width: '80px'}} value={edit.precio} onChange={(e) => setEdit({ ...edit, precio: e.target.value })} /> : money(p.precio)}</td>
+                <td>
+                  {isEditing ? (
+                    <input type="number" style={{width: '80px', border: '1px solid #28a745'}} value={edit.precioOferta} onChange={(e) => setEdit({ ...edit, precioOferta: e.target.value })} />
+                  ) : (
+                    p.precioOferta > 0 ? <b style={{color: '#28a745'}}>{money(p.precioOferta)}</b> : "-"
+                  )}
+                </td>
+                <td style={{ fontWeight: alerta ? 'bold' : 'normal', color: alerta ? 'red' : 'black' }}>{stock}</td>
+                <td>{isEditing ? <input type="number" style={{width: '50px'}} value={edit.minimo} onChange={(e) => setEdit({ ...edit, minimo: e.target.value })} /> : minimo}</td>
+                <td><span style={{ padding: '2px 6px', borderRadius: '4px', background: alerta ? '#ffebee' : 'transparent', color: alerta ? 'red' : 'inherit' }}>{alerta ? "⚠️ Bajo" : active ? "OK" : "Inactivo"}</span></td>
                 <td>
                   <div style={{ display: "flex", gap: 4 }}>
                     <input
                       type="number"
                       placeholder="+"
-                      style={{ width: 50 }}
+                      style={{ width: 45, padding: '4px' }}
                       value={stockIn[p.id] ?? ""}
                       onChange={(e) => setStockIn({ ...stockIn, [p.id]: e.target.value })}
                       disabled={!active}
@@ -242,23 +255,25 @@ export default function Products() {
                     <button disabled={!active} onClick={() => {
                       const qty = Number(stockIn[p.id]);
                       if (qty > 0) { addStock(p.id, qty); setStockIn({ ...stockIn, [p.id]: "" }); }
-                    }}>Agregar</button>
+                    }}>Add</button>
                   </div>
                 </td>
                 <td>
-                  <button onClick={() => active ? deactivateProduct?.(p.id) : activateProduct?.(p.id)}>
-                    {active ? "Desactivar" : "Activar"}
-                  </button>
-                </td>
-                <td>
-                  {isEditing ? (
-                    <>
-                      <button onClick={() => saveEdit(p.id)}>OK</button>
-                      <button onClick={() => setEditingId(null)}>X</button>
-                    </>
-                  ) : (
-                    <button onClick={() => startEdit(p)}>Editar</button>
-                  )}
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    {isEditing ? (
+                      <>
+                        <button onClick={() => saveEdit(p.id)} style={{background: '#28a745', color: 'white'}}>💾</button>
+                        <button onClick={() => setEditingId(null)}>🚫</button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => startEdit(p)}>📝</button>
+                        <button onClick={() => active ? deactivateProduct?.(p.id) : activateProduct?.(p.id)}>
+                          {active ? "🔒" : "🔓"}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             );
