@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useBodega } from '../store/BodegaContext'; // Ajusta la ruta según tu proyecto
+import { useBodega } from '../store/BodegaContext'; 
 
 const Navbar = () => {
   const { user, logout } = useBodega();
@@ -10,7 +10,7 @@ const Navbar = () => {
   const handleLogout = () => {
     if (confirm("¿Estás seguro que deseas cerrar sesión?")) {
       logout();
-      navigate("/"); // Te manda al login
+      navigate("/"); 
     }
   };
 
@@ -19,6 +19,7 @@ const Navbar = () => {
       <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
         <Link to="/" style={linkStyle}>🏠 Inicio</Link>
         <Link to="/venta" style={linkStyle}>💰 Venta</Link>
+        <Link to="/resumen-dia" style={linkStyle}>📅 Resumen Diario</Link> 
         <Link to="/inventario" style={linkStyle}>📦 Inventario</Link>
         
         {/* Solo el Admin ve estos links */}
@@ -26,6 +27,8 @@ const Navbar = () => {
           <>
             <Link to="/productos" style={linkStyle}>📝 Productos</Link>
             <Link to="/reportes" style={linkStyle}>📊 Reportes</Link>
+            {/* ✅ Pestaña añadida: Resumen Diario */}
+            <Link to="/resumen-dia" style={linkStyle}>📅 Resumen Diario</Link> 
             <Link to="/usuarios" style={linkStyle}>👥 Usuarios</Link>
           </>
         )}
@@ -34,7 +37,7 @@ const Navbar = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
         <div style={userBadge}>
           <small style={{ display: 'block', fontSize: '10px', color: '#666' }}>
-            {user?.role.toUpperCase()}
+            {user?.role?.toUpperCase()}
           </small>
           <strong>{user?.nombre}</strong>
         </div>
@@ -47,7 +50,7 @@ const Navbar = () => {
   );
 };
 
-// --- ESTILOS RÁPIDOS ---
+// --- ESTILOS ---
 const navStyle = {
   display: 'flex',
   justifyContent: 'space-between',
@@ -57,7 +60,14 @@ const navStyle = {
   alignItems: 'center'
 };
 
-const linkStyle = { textDecoration: 'none', color: '#333', fontWeight: '500' };
+const linkStyle = { 
+  textDecoration: 'none', 
+  color: '#333', 
+  fontWeight: '500',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '4px'
+};
 
 const userBadge = {
   textAlign: 'right',

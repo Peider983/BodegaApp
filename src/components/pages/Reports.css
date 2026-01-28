@@ -1,0 +1,103 @@
+.reports-container {
+  padding: 30px;
+  background-color: #ffffff;
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.reports-title {
+  font-size: 28px;
+  color: #1a202c;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Secciones de Reporte */
+.report-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 40px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 18px;
+  margin: 0;
+  color: #2d3748;
+}
+
+/* Estilo Alerta Roja */
+.section-alert {
+  border-top: 4px solid #f56565;
+}
+
+.alert-title {
+  color: #c53030 !important;
+}
+
+/* Tablas de Reporte */
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.report-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  padding: 12px 15px;
+  border-bottom: 2px solid #e2e8f0;
+  text-align: left;
+}
+
+.report-table td {
+  padding: 15px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #475569;
+}
+
+.report-table tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Badges de Tipo */
+.type-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-block;
+}
+
+.type-entrada {
+  background-color: #def7ec;
+  color: #03543f;
+}
+
+.type-salida {
+  background-color: #fde8e8;
+  color: #9b1c1c;
+}
+
+/* Mensajes Vacíos */
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+  font-style: italic;
+}

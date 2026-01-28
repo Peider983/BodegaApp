@@ -1,6 +1,7 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useBodega } from "./store/BodegaContext";
+//import "./App.css"; // 🔥 IMPORTAMOS EL CSS AQUÍ
 
 // Componentes de Estructura
 import Layout from "./components/Layout";
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/venta" element={<NewSale />} />
         <Route path="/inventario" element={<InventoryLog />} />
+        <Route path="/resumen-dia" element={<DaySummary />} />
 
         {/* RUTAS PROTEGIDAS (Solo Administrador) */}
         {user.role === "admin" && (

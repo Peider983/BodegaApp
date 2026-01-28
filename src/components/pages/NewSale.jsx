@@ -1,7 +1,8 @@
+/*
 import React, { useEffect, useMemo, useState } from "react";
 import { useBodega } from "../../store/BodegaContext";
 
-/** Guaraní (PYG) sin decimales */
+
 const money = (value, currency = "PYG", locale = "es-PY") => {
   const n = Number(value ?? 0);
   return new Intl.NumberFormat(locale, {
@@ -261,3 +262,158 @@ export default function NewSale() {
 const inputStyle = { width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd', boxSizing: 'border-box' };
 const btnAddStyle = { padding: '0 20px', background: '#007bff', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' };
 const tdStyle = { padding: '12px 10px' };
+*/
+import React, { useEffect, useMemo, useState } from "react";
+import { useBodega } from "../../store/BodegaContext";
+import "./NewSale.css"; // 🔥 IMPORTACIÓN DEL CSS
+
+const money = (value) => {
+  return new Intl.NumberFormat("es-PY", {
+    style: "currency",
+    currency: "PYG",
+    minimumFractionDigits: 0,
+  }).format(Number(value ?? 0));
+};
+
+export default function NewSale() {
+  const { products, sell } = useBodega();
+  const [query, setQuery] = useState("");
+  const [productId, setProductId] = useState("");
+  const [qty, setQty] = useState(1);
+  const [paymentMethod, setPaymentMethod] = useState("efectivo");
+  const [items, setItems] = useState([]);
+
+  const activeProducts = useMemo(() => (products || []).filter((p) => p.active !== false), [products]);
+
+  const filteredProducts = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return q ? activeProducts.filter(p => p.nombre.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)) : activeProducts;
+  }, [activeProducts, query]);
+
+  useEffect(() => {
+    if (filteredProducts.length > 0) setProductId(filteredProducts[0].id);
+  }, [filteredProducts]);
+
+  const addItem = () => {
+    const p = activeProducts.find(x => x.id === Number(productId));
+    if (!p || qty <= 0) return;
+    
+    // Validar stock (incluyendo lo que ya está en carrito)
+    const inCart = items.filter(it => it.productId === p.id).reduce((acc, it) => acc + it.qty, 0);
+    if (qty > (p.stock - inCart)) return alert("Stock insuficiente");
+
+    setItems(prev => {
+      const idx = prev.findIndex(it => it.productId === p.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx].qty += qty;
+        return copy;
+      }
+      return [...prev, { productId: p.id, qty }];
+    });
+    setQty(1);
+  };
+
+  const removeItem = (pid) => setItems(prev => prev.filter(it => it.productId !== pid));
+
+  const cartTotal = useMemo(() => {
+    return items.reduce((acc, it) => {
+      const p = activeProducts.find(x => x.id === it.productId);
+      const price = p?.precioOferta > 0 ? p.precioOferta : p.precio;
+      return acc + (price * it.qty);
+    }, 0);
+  }, [items, activeProducts]);
+
+  const submitAll = () => {
+    items.forEach(it => sell({ productId: it.productId, qty: it.qty, paymentMethod }));
+    setItems([]);
+    alert("Venta registrada ✅");
+  };
+
+  return (
+    <div className="sale-container">
+      <header className="sale-header">
+        <h1>💰 Nueva Venta</h1>
+        <div className="method-badge">{paymentMethod.toUpperCase()}</div>
+      </header>
+
+      <div className="sale-layout">
+        <section>
+          <div className="sale-card">
+            <h3 className="sale-card-title">1. Producto</h3>
+            <label className="sale-label">Buscar</label>
+            <input className="sale-input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Filtrar..." />
+            
+            <label className="sale-label">Seleccionar</label>
+            <select className="sale-input" value={productId} onChange={(e) => setProductId(e.target.value)}>
+              {filteredProducts.map(p => (
+                <option key={p.id} value={p.id} disabled={p.stock <= 0}>{p.nombre} ({p.stock} ud.)</option>
+              ))}
+            </select>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ flex: 1 }}>
+                <label className="sale-label">Cantidad</label>
+                <input className="sale-input" type="number" value={qty} onChange={(e) => setQty(Number(e.target.value))} />
+              </div>
+              <button className="sale-btn-add" onClick={addItem}>Añadir</button>
+            </div>
+          </div>
+
+          <div className="sale-card">
+            <h3 className="sale-card-title">2. Pago</h3>
+            <select className="sale-input" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+              <option value="efectivo">💵 Efectivo</option>
+              <option value="transferencia">📱 Transferencia</option>
+              <option value="tarjeta">💳 Tarjeta</option>
+            </select>
+          </div>
+        </section>
+
+        <section className="sale-card">
+          <h3 className="sale-card-title">🛒 Carrito</h3>
+          <div className="table-wrapper">
+            <table className="cart-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Cant.</th>
+                  <th>Subtotal</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map(it => {
+                  const p = activeProducts.find(x => x.id === it.productId);
+                  const price = p?.precioOferta > 0 ? p.precioOferta : p.precio;
+                  return (
+                    <tr key={it.productId}>
+                      <td>
+                        {p?.nombre}
+                        {p?.precioOferta > 0 && <br />}
+                        {p?.precioOferta > 0 && <span className="offer-badge">Oferta</span>}
+                      </td>
+                      <td>{it.qty}</td>
+                      <td>{money(price * it.qty)}</td>
+                      <td><button className="btn-delete" onClick={() => removeItem(it.productId)}>✕</button></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="cart-footer">
+            <div className="total-row">
+              <span>Total:</span>
+              <span className="total-amount">{money(cartTotal)}</span>
+            </div>
+            <button className="btn-confirm" disabled={items.length === 0} onClick={submitAll}>
+              CONFIRMAR VENTA
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}

@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useContext,
@@ -102,7 +103,7 @@ export function BodegaProvider({ children }) {
     }
 
     // Precio dinámico: Oferta vs Normal
-    const precioAplicado = (p.precioOferta > 0) ? p.precioOferta : p.precio;
+    const precioAplicado = (p.precioOferta > 0) ? Number(p.precioOferta) : Number(p.precio);
     const total = precioAplicado * q;
 
     setProducts((prev) =>
@@ -110,7 +111,7 @@ export function BodegaProvider({ children }) {
     );
 
     const sale = {
-      id: crypto.randomUUID?.() ?? String(Date.now()),
+      id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : String(Date.now()),
       productId: p.id,
       nombre: p.nombre,
       qty: q,
@@ -170,6 +171,9 @@ export function BodegaProvider({ children }) {
     });
   };
 
+  const deactivateProduct = (id) => updateProduct(id, { active: false });
+  const activateProduct = (id) => updateProduct(id, { active: true });
+
   const addStock = (id, qty, metadata = null) => {
     const pid = Number(id);
     const q = Number(qty);
@@ -222,6 +226,7 @@ export function BodegaProvider({ children }) {
     user, users, login, logout, addUser, updateUser, deleteUser,
     products, sales, days, movements, summary,
     sell, cancelSale, closeDay, addProduct, updateProduct, addStock,
+    deactivateProduct, activateProduct,
     resetAll: () => { if(confirm("¿Borrar todo?")) { localStorage.clear(); window.location.reload(); } }
   };
 
