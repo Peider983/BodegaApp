@@ -136,3 +136,9 @@
   margin: 10px 0;
   border: 1px dashed #ced4da;
 }
+.sale-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* tabla más chica, resumen más cómodo */
+  gap: 20px;
+  align-items: start;
+}
