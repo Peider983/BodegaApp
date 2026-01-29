@@ -55,7 +55,7 @@ const navStyle = {
   display: 'flex',
   justifyContent: 'space-between',
   padding: '10px 20px',
-  background: '#fff',
+  background: '#ffffff',
   borderBottom: '1px solid #ddd',
   alignItems: 'center'
 };

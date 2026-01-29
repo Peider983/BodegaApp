@@ -13,7 +13,14 @@ const Login = () => {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '100px' }}>
+    <div style={{ 
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  minHeight: '100vh',
+  backgroundColor: '#68db8b'
+}}>
+
       <form onSubmit={handleSubmit} style={loginBoxStyle}>
         <h2>BODEGA BARATOTE</h2>
         <input 
@@ -34,8 +41,8 @@ const Login = () => {
   );
 };
 
-const loginBoxStyle = { padding: '40px', background: '#fff', borderRadius: '10px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', textAlign: 'center' };
+const loginBoxStyle = { padding: '40px', background: '#c46e6e', borderRadius: '10px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', textAlign: 'center' };
 const inputStyle = { display: 'block', width: '100%', marginBottom: '15px', padding: '10px', borderRadius: '5px', border: '1px solid #ddd' };
-const btnStyle = { width: '100%', padding: '10px', background: '#28a745', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' };
+const btnStyle = { width: '100%', padding: '10px', background: '#28a745', color: '#bb9494', border: 'none', borderRadius: '5px', cursor: 'pointer' };
 
 export default Login;
