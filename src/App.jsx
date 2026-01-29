@@ -1,7 +1,7 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useBodega } from "./store/BodegaContext";
-//import "./App.css"; // 🔥 IMPORTAMOS EL CSS AQUÍ
+import "./styles/App.css"; // 🔥 IMPORTAMOS EL CSS AQUÍ
 
 // Componentes de Estructura
 import Layout from "./components/Layout";
