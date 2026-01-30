@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  almacenista
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String   // hash
+  role      Role
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  precio    Int
+  stock     Int      @default(0)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Sale {
+  id            Int      @id @default(autoincrement())
+  createdAt     DateTime @default(now())
+  userId        Int
+  paymentMethod String
+  total         Int
+  items         SaleItem[]
+}
+
+model SaleItem {
+  id        Int @id @default(autoincrement())
+  saleId    Int
+  productId Int
+  qty       Int
+  priceUnit Int
+  subtotal  Int
+
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model CashClosure {
+  id        Int      @id @default(autoincrement())
+  closedAt  DateTime @default(now())
+  userId    Int
+  ventas    Int
+  total     Int
+  byPayment Json
+}
